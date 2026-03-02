@@ -111,7 +111,7 @@ resource "aws_security_group" "app" {
 }
 
 # Separate rules to avoid circular dependency
-resource "aws_security_group_rule" "jenkins_to_app" {
+resource "aws_security_group_rule" "jenkins_to_app_ssh" {
   type                     = "egress"
   from_port                = 22
   to_port                  = 22
@@ -121,7 +121,27 @@ resource "aws_security_group_rule" "jenkins_to_app" {
   description              = "SSH to app server"
 }
 
-resource "aws_security_group_rule" "app_from_jenkins" {
+resource "aws_security_group_rule" "jenkins_to_app_all" {
+  type                     = "egress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.jenkins.id
+  source_security_group_id = aws_security_group.app.id
+  description              = "All TCP to app server"
+}
+
+resource "aws_security_group_rule" "jenkins_to_app_icmp" {
+  type                     = "egress"
+  from_port                = -1
+  to_port                  = -1
+  protocol                 = "icmp"
+  security_group_id        = aws_security_group.jenkins.id
+  source_security_group_id = aws_security_group.app.id
+  description              = "ICMP to app server"
+}
+
+resource "aws_security_group_rule" "app_from_jenkins_ssh" {
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
@@ -129,4 +149,24 @@ resource "aws_security_group_rule" "app_from_jenkins" {
   security_group_id        = aws_security_group.app.id
   source_security_group_id = aws_security_group.jenkins.id
   description              = "SSH from Jenkins"
+}
+
+resource "aws_security_group_rule" "app_from_jenkins_all" {
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.app.id
+  source_security_group_id = aws_security_group.jenkins.id
+  description              = "All TCP from Jenkins"
+}
+
+resource "aws_security_group_rule" "app_from_jenkins_icmp" {
+  type                     = "ingress"
+  from_port                = -1
+  to_port                  = -1
+  protocol                 = "icmp"
+  security_group_id        = aws_security_group.app.id
+  source_security_group_id = aws_security_group.jenkins.id
+  description              = "ICMP from Jenkins"
 }
